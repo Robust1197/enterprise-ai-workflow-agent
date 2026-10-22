@@ -86,3 +86,17 @@ def test_mobile_lesson_teaches_all_assigned_syntax_and_links_docs() -> None:
     for topic in ("BaseModel", "ConfigDict", "StrictBool", "Literal", "UUID", "datetime", "ValidationError"):
         assert topic in html
     assert "https://docs.pydantic.dev/latest/concepts/fields/" in html
+
+
+def test_day_2_triage_question_explains_business_intent_and_scope() -> None:
+    html = (RUNNER.parent / "index.html").read_text(encoding="utf-8")
+    app = (RUNNER.parent / "app.js").read_text(encoding="utf-8")
+    lab = (RUNNER.parents[1] / "docs" / "DAY_02_LAB.md").read_text(encoding="utf-8")
+    for token in ("payment_issue", "access_issue", "general", "other", "critical", "summary", "needs_human_review"):
+        assert token in html
+        assert token in lab
+    assert "第三关完整题目" in html
+    assert "不实现自动分类算法" in html
+    assert "priority=\"super_urgent\"" in html
+    assert "go-triage" in app
+    assert "NOT the classification algorithm" in lab

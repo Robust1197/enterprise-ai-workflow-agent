@@ -153,6 +153,31 @@ except ValidationError as exc:
         <p>语法错误（如缩进）发生在 Python 解析阶段；模型规则错误会在 Pydantic 验证阶段产生 <code>ValidationError</code>；依赖下载失败则是运行环境错误。三者不是一回事。</p>
       </div>
       <div class="banner">开始写题前，应该能在上面找到每种语法的例子和官方出处。网页内的10项检查使用真正的 Python/Pydantic；首次载入需要网络，后续在同一页面中复用运行器。</div>
+
+      <div class="panel" style="border-color:#b5d6c9;background:#f7fbf9" id="triage-task">
+        <h2>第三关完整题目：TriageResult 是 AI 的“工单分析结果”</h2>
+        <p><strong>先理解业务：</strong>客户提交工单后，AI 会提出问题分类、处理优先级和简要摘要。今天<strong>不实现自动分类算法，不编写 Prompt，也不调用 LLM</strong>。你只需要声明允许的输出字段、类型与规则，由 Pydantic 拒绝非法结构。</p>
+        <h3>示例：客户到底遇到了什么问题？</h3>
+        <pre>客户输入：
+クレジットカードで決済しようとすると
+エラーが発生し、注文を完了できません。</pre>
+        <p>未来的 Agent 可以<strong>建议</strong>下面的分析结果，前提是基于实际业务规则与证据；这里的优先级只是为了讲解的示例，不是自动判级规则。</p>
+        <pre>{
+  "category": "payment_issue",
+  "priority": "high",
+  "summary": "決済時にエラーが発生し、注文を完了できない",
+  "needs_human_review": true
+}</pre>
+        <h3>这四个字段各自代表什么？</h3>
+        <p><strong>category = 问题类别</strong>：客户遇到了哪种业务问题？本题可选 <code>payment_issue</code>（支付）、<code>access_issue</code>（登录/访问）、<code>general</code>（一般咨询）、<code>other</code>（其他）。用 <code>Literal</code> 定义允许值，不能随意添加字符串。</p>
+        <p><strong>priority = 工单处理优先级</strong>：排队处理时的重要或紧急程度。本题可选 <code>low</code>（低）、<code>medium</code>（中）、<code>high</code>（高）、<code>critical</code>（严重）。今天只限制允许值；如何判级是未来策略与模型设计的任务。</p>
+        <p><strong>summary = 客户问题的简短摘要</strong>：例如“決済時にエラーが発生し、注文を完了できない”。必须是<strong>5～300字符的字符串</strong>，不是固定枚举；用 <code>str = Field(min_length=5, max_length=300)</code> 约束。摘要本身是否准确，还要未来单独评估。</p>
+        <p><strong>needs_human_review = 是否需要人工复核</strong>：必须是 <code>True</code> 或 <code>False</code>；字符串 <code>"yes"</code> 无效，使用 <code>StrictBool</code>。这个标记是复核建议，不意味着模型已获准修改 CRM。</p>
+        <h3>你要写的代码与通关条件</h3>
+        <p>请在 <code>class TriageResult(BaseModel)</code> 内定义上述<strong>4个必填字段</strong>；使用 <code>Literal</code> 限制 category / priority，使用 <code>Field</code> 限制 summary，使用 <code>StrictBool</code> 约束人工复核标记。</p>
+        <p>正常样例应当成功创建模型；当 <code>priority="super_urgent"</code>、<code>summary="NG"</code> 或 <code>needs_human_review="yes"</code> 时，必须报验证错误。你不需要判断这条客户工单究竟应当选 high 还是 medium。</p>
+        <p><strong>不懂语法时先查：</strong><a href="https://docs.pydantic.dev/latest/concepts/fields/" target="_blank" rel="noopener">Pydantic Field</a> · <a href="https://docs.python.org/3/library/typing.html#typing.Literal" target="_blank" rel="noopener">Literal</a> · <a href="https://docs.pydantic.dev/latest/api/types/#pydantic.types.StrictBool" target="_blank" rel="noopener">StrictBool</a></p>
+      </div>
       <h3>知识检测</h3>
       <fieldset id="quiz-box">
         <legend class="small">为什么我们要使用 <code>ConfigDict(extra="forbid")</code>？</legend>
@@ -167,7 +192,7 @@ except ValidationError as exc:
   <section class="tab-section" id="page-code" hidden>
     <div class="panel">
       <h2>⌨️ 手机 Python 编辑器</h2>
-      <p class="small">今天亲自实现3个 Pydantic 类。请先完成 <strong>TicketCreate</strong>，再写 Ticket 和 TriageResult。默认代码故意不完整。</p>
+      <p class="small">今天亲自实现3个 Pydantic 类。先完成 TicketCreate 与 Ticket，再定义 TriageResult。<strong>第三关不是写分类算法：</strong>category 是业务类别，priority 是处理优先级，summary 是5～300字的客户问题摘要。各字段的全部枚举值、实例及验收标准，请先读「学原理」页的 <a href="#triage-task" id="go-triage">第三关完整题目</a>。</p>
       <div class="button-row"><button id="hint" class="secondary">查看提示</button><button id="indent" class="secondary">⇥ 缩进4格</button><button id="dedent" class="secondary">⇤ 减少缩进</button><button id="copy" class="secondary">复制代码</button><button id="reset" class="secondary">重置草稿</button></div>
       <div class="note" id="hint-panel" hidden></div>
       <label for="code" class="small">app/domain/models.py · 编辑内容自动保存在本机浏览器</label>

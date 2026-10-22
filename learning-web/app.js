@@ -77,6 +77,12 @@ document.querySelectorAll(".nav button").forEach(btn => {
     if(target==="code") preloadRuntime();
   });
 });
+$("go-triage").addEventListener("click", (event) => {
+  event.preventDefault();
+  const learnTab = document.querySelector('.nav button[data-tab="learn"]');
+  learnTab.click();
+  document.getElementById("triage-task").scrollIntoView({behavior:"smooth",block:"start"});
+});
 $("check-quiz").addEventListener("click", () => {
   const selected = document.querySelector('input[name="quiz"]:checked');
   if (!selected) { $("quiz-result").textContent = "请选择一个答案。"; return; }
