@@ -82,15 +82,77 @@ footer{font-size:12px;color:#667d73;margin:12px 0}
   </section>
   <section class="tab-section" id="page-learn">
     <div class="panel">
-      <h2>📖 先理解，再写代码</h2>
-      <div class="lesson"><h3>1. 类型标注 ≠ 自动验证</h3><p><code>subject: str</code> 表示期望使用字符串。普通 Python 不会在所有函数调用处自动检查类型；Pydantic 则在创建模型时验证输入。</p></div>
-      <div class="lesson"><h3>2. Field 是数据契约</h3><pre>from pydantic import BaseModel, Field
+      <h2>📖 从完整 Agent 流程学习 Day 2</h2>
+      <p>我们不是为了记 Python 语法而做工单模型。Pydantic 是 AI 输出到企业业务操作之间的一道<strong>可执行数据契约</strong>。先看模型在整个 Agent 系统中的位置。</p>
+      <pre>用户提出工单 → FastAPI 接收与验证
+    → 知识库检索 RAG（提供来源）
+    → LLM 生成建议（不直接执行）
+    → Pydantic 验证 AI 输出格式
+    → 策略引擎检查权限与风险
+    → 需要时人工审批
+    → 调用 CRM / Salesforce 工具
+    → 审计日志 + 质量评估</pre>
+      <div class="note">今天真正做的是第 1 步的输入校验和第 4 步的结构化输出校验。<strong>校验通过 ≠ 内容真实 ≠ 获得执行权限。</strong> 这三件事必须分开设计。</div>
+      <h3>工单场景：哪些字段谁来提供？</h3>
+      <p>客户报告“決済画面でエラー”。客户提供 <code>subject</code> 和 <code>description</code>；系统生成 <code>id</code>、<code>created_at</code>、初始 <code>status</code>；AI 只能<strong>建议</strong>类别、优先级、摘要和是否要求人工确认。</p>
+      <h3>练习会用到的语法（不再突然考试）</h3>
+      <div class="lesson"><h3>1. BaseModel、类型注解、必填与默认值</h3>
+        <pre>from pydantic import BaseModel
 
-class ReadingSession(BaseModel):
-    minutes: int = Field(ge=1, le=180)</pre><p>意味着读书时长在1至180分钟之间。工单标题也应该限定长度，避免任意内容进入业务系统。</p></div>
-      <div class="lesson"><h3>3. 默认转换与严格类型</h3><p>Pydantic 的 <code>bool</code> 在默认模式下可能把 <code>"yes"</code> 转成 <code>True</code>；Agent 工具参数要用 <code>StrictBool</code> 等明确防止非预期转换。</p></div>
-      <div class="lesson"><h3>4. 输入模型和存储模型不同</h3><p><code>TicketCreate</code> 只允许客户填写标题和描述。<code>Ticket</code> 额外拥有由系统产生的 ID、创建时间和状态，防止客户端冒充系统字段。</p></div>
-      <div class="banner">本页测试执行真正的 Python 和 Pydantic，不是把代码交给 AI 猜正确率。首次运行需要联网下载 WebAssembly 运行时。</div>
+class Customer(BaseModel):
+    name: str          # 必填字符串
+    locale: str = "ja" # 省略时默认 ja
+
+Customer(name="田中")</pre>
+        <p><code>class</code> 定义模型；<code>:</code> 后面是预期类型；有 <code>= "ja"</code> 就有默认值。普通 Python 类型注解本身不会自动进行运行时验证，Pydantic 在实例化时才执行规则。</p>
+        <p><a target="_blank" rel="noopener" href="https://docs.pydantic.dev/latest/concepts/models/">官方文档：BaseModel、字段定义与必填</a></p>
+      </div>
+      <div class="lesson"><h3>2. Field：类型在冒号后，限制在等号后</h3>
+        <pre>from pydantic import Field
+
+subject: str = Field(min_length=3, max_length=120)
+summary: str = Field(min_length=5, max_length=300)</pre>
+        <p><code>str</code> 是类型，<code>Field(...)</code> 是验证规则。不要写 <code>summary: Field(...)</code>，因为 Field 不是类型。<code>ge</code>/<code>le</code> 用于数字，<code>min_length</code>/<code>max_length</code> 用于文本等长度。</p>
+        <p><a target="_blank" rel="noopener" href="https://docs.pydantic.dev/latest/concepts/fields/">官方文档：Field 参数与验证约束</a></p>
+      </div>
+      <div class="lesson"><h3>3. ConfigDict：拒绝未知输入字段</h3>
+        <pre>from pydantic import ConfigDict
+
+class TicketCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    subject: str</pre>
+        <p><code>extra="forbid"</code> 会拒绝客户偷偷多传的字段，避免无意间信任客户端提供的系统属性。如果什么都不设，Pydantic 默认可能忽略未知字段。</p>
+        <p><a target="_blank" rel="noopener" href="https://docs.pydantic.dev/latest/concepts/config/">官方文档：ConfigDict / extra</a></p>
+      </div>
+      <div class="lesson"><h3>4. 继承、UUID 和 datetime：系统字段</h3>
+        <pre>from uuid import UUID
+from datetime import datetime
+from typing import Literal
+
+class Ticket(TicketCreate):
+    id: UUID
+    created_at: datetime
+    status: Literal["new", "triaged"] = "new"</pre>
+        <p><code>Ticket(TicketCreate)</code> 继承输入字段。<code>UUID</code> 表示标识符格式，<code>datetime</code> 表示日期时间；标注不会自行生成值，必须由服务层生成。<code>Literal</code> 把状态限定为列举值。</p>
+        <p><a target="_blank" rel="noopener" href="https://docs.python.org/3/library/typing.html#typing.Literal">Python 文档：Literal</a> · <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/uuid.html">UUID</a> · <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/datetime.html">datetime</a></p>
+      </div>
+      <div class="lesson"><h3>5. StrictBool：AI 输出必须是明确的布尔值</h3>
+        <pre>from pydantic import StrictBool
+
+class ApprovalDecision(BaseModel):
+    needs_human_review: StrictBool</pre>
+        <p>普通 <code>bool</code> 可能接受字符串 <code>"yes"</code> 并转换为 True；<code>StrictBool</code> 拒绝这样的隐式转换。即使是合法的 True / False，AI 也没有获得执行 CRM 写入操作的权限。</p>
+        <p><a target="_blank" rel="noopener" href="https://docs.pydantic.dev/latest/api/types/#pydantic.types.StrictBool">官方文档：StrictBool</a></p>
+      </div>
+      <div class="lesson"><h3>6. 测试与排错：看异常，不猜答案</h3>
+        <pre>from pydantic import ValidationError
+try:
+    TicketCreate(subject="NG", description="内容不足")
+except ValidationError as exc:
+    print(exc.errors())</pre>
+        <p>语法错误（如缩进）发生在 Python 解析阶段；模型规则错误会在 Pydantic 验证阶段产生 <code>ValidationError</code>；依赖下载失败则是运行环境错误。三者不是一回事。</p>
+      </div>
+      <div class="banner">开始写题前，应该能在上面找到每种语法的例子和官方出处。网页内的10项检查使用真正的 Python/Pydantic；首次载入需要网络，后续在同一页面中复用运行器。</div>
       <h3>知识检测</h3>
       <fieldset id="quiz-box">
         <legend class="small">为什么我们要使用 <code>ConfigDict(extra="forbid")</code>？</legend>

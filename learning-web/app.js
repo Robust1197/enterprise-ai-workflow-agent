@@ -74,6 +74,7 @@ document.querySelectorAll(".nav button").forEach(btn => {
     document.querySelectorAll(".tab-section").forEach(el => el.hidden = el.id !== "page-" + target);
     document.querySelectorAll(".nav button").forEach(el => el.setAttribute("aria-selected", String(el === btn)));
     scrollTo({top:0,behavior:"instant"});
+    if(target==="code") preloadRuntime();
   });
 });
 $("check-quiz").addEventListener("click", () => {
@@ -162,7 +163,7 @@ function drawPending() {
   });
 }
 drawPending();
-let worker=null, running=false, timeoutId=null;
+let worker=null, running=false, timeoutId=null, runSource=null;
 function status(msg){$("runtime-status").textContent=msg;}
 function setBusy(b){running=b;$("run").disabled=b;}
 function terminateRunner(message){
@@ -170,7 +171,40 @@ function terminateRunner(message){
   if(timeoutId){clearTimeout(timeoutId);timeoutId=null;}
   setBusy(false); if(message) status(message);
 }
-$("stop").addEventListener("click",()=>terminateRunner("已停止。代码草稿仍保存在本机。"));
+$("stop").addEventListener("click",()=>terminateRunner("已停止并清理 Python 运行器；草稿仍已保存。"));
+function ensureWorker(){
+  if(worker) return worker;
+  worker = new Worker("runner.worker.js", {type:"module"});
+  worker.onmessage=e=>{
+    const msg=e.data||{};
+    if(msg.type==="status"){status(msg.message||"正在初始化");return;}
+    if(msg.type==="ready"){status("Python 已就绪（Pydantic "+msg.version+"）。后续测试直接运行，无需重新启动。");return;}
+    if(msg.type==="done"){
+      if(timeoutId){clearTimeout(timeoutId);timeoutId=null;}
+      setBusy(false);
+      status("测试完成，运行器已缓存。");
+      if($("code").value!==runSource){
+        $("result").textContent="执行期间代码发生改变；旧结果已忽略，请重新点击运行。";
+      }else{
+        display(msg.data);
+      }
+    }else if(msg.type==="error"){
+      terminateRunner("Python 运行环境失败（并非你的代码测试失败）。请查看下方原因。");
+      $("result").textContent=String(msg.error||"未知错误");
+    }
+  };
+  worker.onerror=e=>{
+    terminateRunner("Worker 启动失败；请检查 HTTPS、浏览器 WebAssembly 支持与网络。");
+    $("result").textContent=String(e.message||"Worker error");
+  };
+  return worker;
+}
+function preloadRuntime(){
+  if(!worker && !running){
+    try{ensureWorker().postMessage({type:"init"});}
+    catch(err){terminateRunner("无法启动模块 Worker："+String(err.message||err));}
+  }
+}
 function display(out){
   if(!out || !Array.isArray(out.cases)) { $("result").textContent="运行器返回了无效测试结果。"; return; }
   $("tests").innerHTML="";
@@ -197,31 +231,16 @@ function display(out){
 }
 $("run").addEventListener("click",()=>{
   if(running)return;
-  terminateRunner();
-  setBusy(true); status("启动浏览器中的 Python 运行器，首次可能需要下载运行环境和 Pydantic…");
-  $("result").textContent="正在运行真正的 Python，不是文字模式匹配。";
+  setBusy(true);
+  runSource=$("code").value;
+  status(worker ? "使用已启动的 Python 运行器执行测试…" : "首次载入 Python 运行器…");
+  $("result").textContent="正在运行 Pydantic 模型验证。";
   $("tests").innerHTML="";
-  const code=$("code").value;
-  worker=new Worker("runner.worker.js");
-  worker.onmessage=e=>{
-    const msg=e.data||{};
-    if(msg.type==="status"){status(msg.message||"运行中");return;}
-    if(msg.type==="done"){
-      if(timeoutId){clearTimeout(timeoutId);timeoutId=null;}
-      setBusy(false); status("测试完成。");
-      display(msg.data);
-    }else if(msg.type==="error"){
-      terminateRunner("运行器加载或运行失败。请检查网络连接和浏览器是否支持 WebAssembly。");
-      $("result").textContent=String(msg.error||"未知错误");
-    }
-  };
-  worker.onerror=e=>{
-    terminateRunner("Web Worker 启动失败。需要从 HTTP(S) 网页打开，而不是 file:// 。");
-    $("result").textContent=String(e.message||"Worker error");
-  };
-  worker.postMessage({type:"run",code});
+  try {ensureWorker().postMessage({type:"run",code:runSource});}
+  catch(err){terminateRunner("无法启动模块 Worker");$("result").textContent=String(err.message||err);return;}
+  if(timeoutId)clearTimeout(timeoutId);
   timeoutId=setTimeout(()=>{
-    terminateRunner("运行超过120秒，已停止。可检查网络后重试；代码不会丢失。");
-    $("result").textContent="超时不是测试失败。请检查首次 CDN/包下载能否完成。";
+    terminateRunner("执行超时（120秒）。请检查 CDN 连接情况。代码草稿不会丢失。");
+    $("result").textContent="加载超时≠ Python 代码失败。可切换网络或使用 Windows pytest。";
   },120000);
 });
