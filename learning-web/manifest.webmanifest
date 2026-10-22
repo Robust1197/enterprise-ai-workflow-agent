@@ -1,0 +1,9 @@
+{
+  "name": "Agent Quest — AI Engineer Learning Lab",
+  "short_name": "Agent Quest",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f6f4",
+  "theme_color": "#123b39",
+  "lang": "zh-CN"
+}
