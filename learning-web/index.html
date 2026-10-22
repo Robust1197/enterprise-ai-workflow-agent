@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#123b39">
+<meta name="description" content="Enterprise AI Workflow Agent：手机端真实 Python / Pydantic 学习与练习">
+<title>Agent Quest | 手机 AI Engineer 学习实验室</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI","Noto Sans SC",sans-serif;color:#19312d;background:#f3f6f4;font-synthesis:none}
+*{box-sizing:border-box}
+body{margin:0;padding:0;padding-bottom:calc(84px + env(safe-area-inset-bottom));line-height:1.55}
+header{background:linear-gradient(135deg,#0d3936,#20615b);color:#fff;padding:20px 18px 24px;border-radius:0 0 24px 24px}
+.wrap{max-width:940px;margin:auto}
+.kicker{text-transform:uppercase;letter-spacing:.13em;font-size:11px;opacity:.83;font-weight:700}
+h1{font-size:23px;line-height:1.25;margin:8px 0 8px}
+header p{font-size:13px;margin:0;opacity:.88}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.chip{background:#ffffff22;padding:5px 10px;border-radius:100px;font-size:12px;white-space:nowrap}
+main{padding:16px;max-width:940px;margin:auto}
+.panel{background:white;border:1px solid #e1e9e6;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 2px 7px #1a433b06}
+h2{font-size:18px;margin:0 0 10px} h3{font-size:15px;margin:12px 0 8px}
+p{margin:7px 0 12px}
+.small,.muted{color:#637670;font-size:13px}.muted{margin-top:6px}
+.progress-track{height:9px;border-radius:100px;background:#e8eeeb;overflow:hidden}
+#progress-bar{height:100%;background:#21846c;width:0;transition:width .35s}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.tab-section[hidden]{display:none!important}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dce5e1;display:flex;z-index:20;padding:8px 8px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px #1a403515}
+.nav button{border:0;background:none;flex:1;padding:7px 2px;color:#66807a;font-size:12px;font-weight:700;border-radius:12px}
+.nav button[aria-selected="true"]{color:#13564e;background:#e7f5ef}
+.nav span{display:block;font-size:19px;margin-bottom:2px}
+button,.btn{cursor:pointer;border-radius:11px;border:1px solid #b9cdc5;background:#fff;color:#17554b;font-size:14px;font-weight:700;padding:11px 15px}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #67bda4;outline-offset:2px}
+button.primary{color:#fff;background:#176554;border-color:#176554}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.secondary{background:#f0f7f4;border-color:#e0ebe6}
+.button-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.button-row button{flex:1;min-width:100px}
+.lesson{border-left:3px solid #439786;padding-left:12px;margin:15px 0}
+code,pre,textarea#code{font-family:ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono CJK SC",monospace}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#143a37;color:#e0f2ec;padding:12px;border-radius:10px;font-size:12px;line-height:1.5}
+code:not(pre code){background:#edf2ef;padding:2px 5px;border-radius:4px;font-size:.91em}
+textarea#code{font-size:13px;line-height:1.5;white-space:pre;resize:vertical;border:1px solid #c6d5cd;border-radius:12px;width:100%;min-height:390px;padding:12px;background:#112d2a;color:#e9f5ee;tab-size:4;overflow:auto;spellcheck:false}
+#result{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.test{padding:10px 12px;border-radius:11px;background:#f4f7f5;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0}
+.test.pass{background:#e6f5ec;color:#176144}
+.test.fail{background:#fff0ee;color:#873d37}
+.test.pending{color:#62766e}
+.test .title{font-size:13px;font-weight:650}
+.test .status{white-space:nowrap;font-size:12px}
+.test-detail{margin:5px 0 12px 3px;font-size:12px;color:#934a3c;white-space:pre-wrap;overflow-wrap:anywhere}
+fieldset{border:0;padding:0;margin:0}
+.option{display:block;border:1px solid #d9e4de;padding:11px 12px;border-radius:10px;margin:7px 0;font-size:14px}
+.option:has(input:checked){background:#e5f6ee;border-color:#58a68b}
+.banner{padding:10px 12px;border-radius:10px;background:#eef5fb;color:#21516b;font-size:13px}
+.warn{background:#fff3dd;color:#7c5720}
+.note{padding:12px 14px;border-radius:10px;background:#f1f6f3;margin:10px 0;font-size:13px}
+a{color:#176554}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{background:#f1f6f3;border-radius:13px;padding:12px}
+.stat strong{display:block;font-size:19px}
+.kbd{border:1px solid #d1dbd5;border-radius:5px;padding:0 5px;background:#fff}
+label.file{display:inline-block;padding:11px 15px;border:1px solid #b9cdc5;border-radius:11px;font-size:14px;font-weight:700;color:#17554b}
+input[type=file]{display:none}
+footer{font-size:12px;color:#667d73;margin:12px 0}
+@media(min-width:770px){header{padding:28px 24px;border-radius:0 0 28px 28px}main{padding:24px}h1{font-size:29px}.panel{padding:24px}.nav{left:50%;right:auto;transform:translateX(-50%);width:460px;border:1px solid #dde8e2;border-radius:20px 20px 0 0}.wide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}textarea#code{min-height:540px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="topline"><span class="kicker">Enterprise AI Workflow Agent · 学习实验室</span><span class="chip">Day 2 / 30</span></div>
+  <h1>不在电脑旁，也能认真练 Python。</h1>
+  <p>手机写代码 · 浏览器内运行 Pydantic · 保存进度 · 回到 DevSpace 继续工程开发</p>
+</div></header>
+<main>
+  <section class="panel" aria-label="今日进度">
+    <div class="meta"><strong>Day 2 · 数据契约</strong><span class="small" id="progress-text">尚未通关</span></div>
+    <div class="progress-track"><div id="progress-bar"></div></div>
+    <p class="small">本页只完成 Day 2 的学习和10个模型测试；正式项目仍以 Windows + Git 仓库为准。</p>
+  </section>
+  <section class="tab-section" id="page-learn">
+    <div class="panel">
+      <h2>📖 先理解，再写代码</h2>
+      <div class="lesson"><h3>1. 类型标注 ≠ 自动验证</h3><p><code>subject: str</code> 表示期望使用字符串。普通 Python 不会在所有函数调用处自动检查类型；Pydantic 则在创建模型时验证输入。</p></div>
+      <div class="lesson"><h3>2. Field 是数据契约</h3><pre>from pydantic import BaseModel, Field
+
+class ReadingSession(BaseModel):
+    minutes: int = Field(ge=1, le=180)</pre><p>意味着读书时长在1至180分钟之间。工单标题也应该限定长度，避免任意内容进入业务系统。</p></div>
+      <div class="lesson"><h3>3. 默认转换与严格类型</h3><p>Pydantic 的 <code>bool</code> 在默认模式下可能把 <code>"yes"</code> 转成 <code>True</code>；Agent 工具参数要用 <code>StrictBool</code> 等明确防止非预期转换。</p></div>
+      <div class="lesson"><h3>4. 输入模型和存储模型不同</h3><p><code>TicketCreate</code> 只允许客户填写标题和描述。<code>Ticket</code> 额外拥有由系统产生的 ID、创建时间和状态，防止客户端冒充系统字段。</p></div>
+      <div class="banner">本页测试执行真正的 Python 和 Pydantic，不是把代码交给 AI 猜正确率。首次运行需要联网下载 WebAssembly 运行时。</div>
+      <h3>知识检测</h3>
+      <fieldset id="quiz-box">
+        <legend class="small">为什么我们要使用 <code>ConfigDict(extra="forbid")</code>？</legend>
+        <label class="option"><input type="radio" name="quiz" value="a"> 让所有字段都变成必填</label>
+        <label class="option"><input type="radio" name="quiz" value="b"> 拒绝模型定义以外的未知字段</label>
+        <label class="option"><input type="radio" name="quiz" value="c"> 把任意字符串都转换成数字</label>
+      </fieldset>
+      <button class="primary" id="check-quiz">检查理解</button>
+      <p id="quiz-result" role="status" class="small"></p>
+    </div>
+  </section>
+  <section class="tab-section" id="page-code" hidden>
+    <div class="panel">
+      <h2>⌨️ 手机 Python 编辑器</h2>
+      <p class="small">今天亲自实现3个 Pydantic 类。请先完成 <strong>TicketCreate</strong>，再写 Ticket 和 TriageResult。默认代码故意不完整。</p>
+      <div class="button-row"><button id="hint" class="secondary">查看提示</button><button id="indent" class="secondary">⇥ 缩进4格</button><button id="dedent" class="secondary">⇤ 减少缩进</button><button id="copy" class="secondary">复制代码</button><button id="reset" class="secondary">重置草稿</button></div>
+      <div class="note" id="hint-panel" hidden></div>
+      <label for="code" class="small">app/domain/models.py · 编辑内容自动保存在本机浏览器</label>
+      <textarea id="code" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Python 代码编辑器"></textarea>
+      <div class="button-row"><button class="primary" id="run">▶ 运行10个测试</button><button id="stop">停止并重置运行器</button></div>
+      <p id="runtime-status" class="small" role="status">尚未启动 Python 运行环境</p>
+    </div>
+    <div class="panel">
+      <div class="meta"><h2>🧪 真实测试结果</h2><strong id="test-count">0/10</strong></div>
+      <div id="tests"></div>
+      <p id="result" class="small"></p>
+    </div>
+  </section>
+  <section class="tab-section" id="page-progress" hidden>
+    <div class="panel">
+      <h2>🏆 学习进度与成果保存</h2>
+      <div class="stats"><div class="stat"><span class="small">学习测验</span><strong id="stat-quiz">未完成</strong></div><div class="stat"><span class="small">Day 2 模型测试</span><strong id="stat-tests">0 / 10</strong></div></div>
+      <div class="note">进度和代码保存在当前设备浏览器中，不会自动同步到电脑或其他手机。可用“导出学习记录”备份，再在另一台设备导入。</div>
+      <div class="button-row"><button id="export" class="primary">导出学习记录</button><label class="file" for="import">导入学习记录</label><input type="file" id="import" accept=".json,application/json"></div>
+      <h3>同步到 Windows 正式项目</h3>
+      <p class="small">在手机编写模型并通过测试后，使用“复制代码”或导出 JSON，再在电脑中粘贴至 <code>app/domain/models.py</code>，运行 <code>uv run pytest -q</code>，并提交 Git。手机版通过不代表电脑版本也自动更新。</p>
+      <h3>免费原理资料</h3>
+      <p class="small"><a href="https://docs.pydantic.dev/latest/concepts/models/" target="_blank" rel="noopener">Pydantic Models</a> · <a href="https://docs.pydantic.dev/latest/concepts/fields/" target="_blank" rel="noopener">Pydantic Field</a> · <a href="https://pyodide.org/en/stable/" target="_blank" rel="noopener">Pyodide 官方文档</a></p>
+    </div>
+  </section>
+  <footer>实验版 v0.1 · 不需要账号或付费 API · 不输入公司机密或个人敏感数据 · 手机端为沙盒练习环境</footer>
+</main>
+<nav class="nav" role="tablist" aria-label="学习模块">
+  <button role="tab" data-tab="learn" aria-selected="true"><span>📖</span>学原理</button>
+  <button role="tab" data-tab="code" aria-selected="false"><span>⌨️</span>写代码</button>
+  <button role="tab" data-tab="progress" aria-selected="false"><span>🏆</span>进度</button>
+</nav>
+<script src="app.js" defer></script>
+</body>
+</html>
